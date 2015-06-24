@@ -12,71 +12,62 @@ namespace CrockSharp
   {
 
     static char[] crockmap = new char[32] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'X', 'Y', 'Z' };
-    /* crock[0]=0
-     * crock[10]=A
-     * crock[18]=J -i
-     * crock[20]=M -l
-     * crock[22]=P -o
-     * crock[27]=V
-     * */
-
-    /*
-     *multiple of 5 bits... and 8 bits per byte 
-     *pad to be multiple of 40 bits
-     * 
-     * 
-     * 
-     * */
 
     public static byte[] Decode(string src)
     {
       var blocks = (int)((src.Length * 5 + 39) / 40D);
       var buffer = new byte[blocks * 40 / 8];
+      var chars = new char[blocks * 8];
 
-      var chars = src.ToCharArray();
-      var c = chars.Select(x=>TestByte(x)).ToArray();
+      for (var i = 0; i < src.Length; i++)
+      {
+        chars[i] = src[i];
+      }
+
+      var c = chars.Select(x=>getByte(x)).ToArray();
 
       for (var i = 0; i < blocks; i++)
       {
-
-        buffer[0] = (byte)(c[0] | ((c[1] & 7) << 5));
-        buffer[1] = (byte)(c[1] >> 3 | (c[2] << 2) | ((c[3] & 1)<<7));
-        buffer[2] = (byte)((c[3] >> 1) | ((c[4] & 15) << 4));
-        buffer[3] = (byte)((c[4] >> 4) | (c[5] << 1) | ((c[6] & 3) << 6));
-        buffer[4] = (byte)((c[6] >> 2) | (c[7] << 3));
-
+        var n = 5 * i;
+        var p = 8 * i;
+        buffer[n + 0] = (byte)(c[p + 0] | ((c[p + 1] & 7) << 5));
+        buffer[n + 1] = (byte)(c[p + 1] >> 3 | (c[p + 2] << 2) | ((c[p + 3] & 1) << 7));
+        buffer[n + 2] = (byte)((c[p + 3] >> 1) | ((c[p + 4] & 15) << 4));
+        buffer[n + 3] = (byte)((c[p + 4] >> 4) | (c[p + 5] << 1) | ((c[p + 6] & 3) << 6));
+        buffer[n + 4] = (byte)((c[p + 6] >> 2) | (c[p + 7] << 3));
       }
-
-        return buffer;
-
+      
+      var len = (int)(src.Length * 5 / 8D);
+      var b = new byte[len];
+      Array.Copy(buffer, b, len);
+      return b;
     }
 
     public static string Encode(byte[] src)
     {
-
       var blocks = (int)((src.Length * 8 + 39) / 40D);
       var buffer = new byte[blocks*40/8];
 
       Array.Copy(src, buffer, src.Length);
-
       var result = new int[blocks*40/5];
 
       for (var i = 0; i < blocks; i++)
       {
-        result[0] = buffer[0] & 31;
-        result[1] = (buffer[0] >> 5) | ((buffer[1] & 3) << 3);
-        result[2] = (buffer[1] >> 2) & 31;
-        result[3] = (buffer[1] >> 7) | ((buffer[2] & 15) << 1);
-        result[4] = (buffer[2] >> 4) | ((buffer[3] & 1) << 4);
-        result[5] = (buffer[3] >> 1) & 31;
-        result[6] = (buffer[3] >> 6) | ((buffer[4] & 7) << 2);
-        result[7] = (buffer[4] >> 3);
+        var n = 8 * i;
+        var p = 5 * i;
+        result[n + 0] = buffer[p + 0] & 31;
+        result[n + 1] = (buffer[p + 0] >> 5) | ((buffer[p + 1] & 3) << 3);
+        result[n + 2] = (buffer[p + 1] >> 2) & 31;
+        result[n + 3] = (buffer[p + 1] >> 7) | ((buffer[p + 2] & 15) << 1);
+        result[n + 4] = (buffer[p + 2] >> 4) | ((buffer[p + 3] & 1) << 4);
+        result[n + 5] = (buffer[p + 3] >> 1) & 31;
+        result[n + 6] = (buffer[p + 3] >> 6) | ((buffer[p + 4] & 7) << 2);
+        result[n + 7] = (buffer[p + 4] >> 3);
       }
 
       var chars = result.Select(x => crockmap[x]).ToArray();
-      return new string(chars);
-
-
+      var len = (int)(src.Length * 8 / 5D + 4 / 5D);
+      return new string(chars, 0, len);
     }
 
     public static bool Compare(byte[] one, byte[] two)
@@ -113,11 +104,17 @@ namespace CrockSharp
       return true;
     }
 
-    public static byte TestByte(char c)
+    private static byte getByte(char c)
     {
+      //TODO: replace this function with a lookup
       var b = (byte)c;
 
-      if (b <= 57)
+      if (b < 48)
+      {
+        //for the special case when were at the end of a string that was extended to fit our block size
+        return 0;
+      }
+      else if (b <= 57)
       {
         b -= 48;
       }
@@ -143,7 +140,7 @@ namespace CrockSharp
       }
       else
       {
-        //throw exception
+        
       }
       return b;
     }
@@ -177,7 +174,7 @@ namespace CrockSharp
           {
             var nextChar = input[count + i];
             temp <<= 5;
-            temp |= TestByte(nextChar);
+            temp |= getByte(nextChar);
           }
 
           *chunk |= temp;
@@ -187,11 +184,6 @@ namespace CrockSharp
 
       }
       return bytes;
-    }
-
-    public static byte getByte(char c)
-    {
-      return (byte)5;
     }
 
     public unsafe static string EncodeUnsafe(byte[] input)
