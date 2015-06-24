@@ -28,6 +28,57 @@ namespace CrockSharp
      * 
      * */
 
+    public static byte[] Decode(string src)
+    {
+      var blocks = (int)((src.Length * 5 + 39) / 40D);
+      var buffer = new byte[blocks * 40 / 8];
+
+      var chars = src.ToCharArray();
+      var c = chars.Select(x=>TestByte(x)).ToArray();
+
+      for (var i = 0; i < blocks; i++)
+      {
+
+        buffer[0] = (byte)(c[0] | ((c[1] & 7) << 5));
+        buffer[1] = (byte)(c[1] >> 3 | (c[2] << 2) | ((c[3] & 1)<<7));
+        buffer[2] = (byte)((c[3] >> 1) | ((c[4] & 15) << 4));
+        buffer[3] = (byte)((c[4] >> 4) | (c[5] << 1) | ((c[6] & 3) << 6));
+        buffer[4] = (byte)((c[6] >> 2) | (c[7] << 3));
+
+      }
+
+        return buffer;
+
+    }
+
+    public static string Encode(byte[] src)
+    {
+
+      var blocks = (int)((src.Length * 8 + 39) / 40D);
+      var buffer = new byte[blocks*40/8];
+
+      Array.Copy(src, buffer, src.Length);
+
+      var result = new int[blocks*40/5];
+
+      for (var i = 0; i < blocks; i++)
+      {
+        result[0] = buffer[0] & 31;
+        result[1] = (buffer[0] >> 5) | ((buffer[1] & 3) << 3);
+        result[2] = (buffer[1] >> 2) & 31;
+        result[3] = (buffer[1] >> 7) | ((buffer[2] & 15) << 1);
+        result[4] = (buffer[2] >> 4) | ((buffer[3] & 1) << 4);
+        result[5] = (buffer[3] >> 1) & 31;
+        result[6] = (buffer[3] >> 6) | ((buffer[4] & 7) << 2);
+        result[7] = (buffer[4] >> 3);
+      }
+
+      var chars = result.Select(x => crockmap[x]).ToArray();
+      return new string(chars);
+
+
+    }
+
     public static bool Compare(byte[] one, byte[] two)
     {
       var max = one;
@@ -97,7 +148,7 @@ namespace CrockSharp
       return b;
     }
 
-    public unsafe static byte[] Decode(string input)
+    public unsafe static byte[] DecodeUnsafe(string input)
     {
       var len = input.Length;
       var rem = len % 8;
@@ -143,7 +194,7 @@ namespace CrockSharp
       return (byte)5;
     }
 
-    public unsafe static string Encode(byte[] input)
+    public unsafe static string EncodeUnsafe(byte[] input)
     {
       var len = input.Length;
       var rem = len % 5;
