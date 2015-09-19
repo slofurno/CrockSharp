@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>CrockSharp</id>
+    <version>0.9.5</version>
+    <title>CrockSharp</title>
+    <authors>Steven LoFurno</authors>
+    <owners>Steven LoFurno</owners>
+    <licenseUrl>https://github.com/slofurno/CrockSharp</licenseUrl>
+    <projectUrl>https://github.com/slofurno/CrockSharp</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>base 32 strings following Douglas Crockford's spec</description>
+    <releaseNotes>initial nuget release</releaseNotes>
+    <copyright>Copyright 2015</copyright>
+    <tags>base32 csharp</tags>
+  </metadata>
+  <files>
+	<file src="bin\Release\dnx451\CrockSharp.dll" target="lib\dnx451\CrockSharp.dll" />
+	<file src="bin\Release\dnx451\CrockSharp.pdb" target="lib\dnx451\CrockSharp.pdb" />
+	<file src="bin\Release\dnx451\CrockSharp.xml" target="lib\dnx451\CrockSharp.xml" />
+	<file src="bin\Release\dnxcore50\CrockSharp.dll" target="lib\dnxcore50\CrockSharp.dll" />
+	<file src="bin\Release\dnxcore50\CrockSharp.pdb" target="lib\dnxcore50\CrockSharp.pdb" />
+	<file src="bin\Release\dnxcore50\CrockSharp.xml" target="lib\dnxcore50\CrockSharp.xml" />
+    </files>
+</package>
